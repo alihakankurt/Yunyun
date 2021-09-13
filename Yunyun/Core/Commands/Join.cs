@@ -31,7 +31,7 @@ namespace Yunyun.Core.Commands
             
             await LavalinkService.JoinAsync(target, Context.Channel as ITextChannel);
             player = LavalinkService.GetPlayer(Context.Guild);
-            await player.UpdateVolumeAsync(10);
+            await player.UpdateVolumeAsync(70);
             await ReplyAsync($"Joined to `{target.Name}` and bound to {Context.Channel.Mention()}.");
         }
     }
