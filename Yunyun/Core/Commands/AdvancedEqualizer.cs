@@ -13,7 +13,7 @@ namespace Yunyun.Core.Commands
     {
         [Name("Advenced Equalizer")]
         [Command("adveq", RunMode = RunMode.Async)]
-        [Summary("Sets the player's equalizer.")]
+        [Summary("Advanced version of the equalizer command.")]
         public async Task AdvencedEqualizerCommand([Summary("Must be between 1 and 15.")] int band, [Summary("Gets value between -2.5dB and 10dB.")] double gain)
         {
             var player = LavalinkService.GetPlayer(Context.Guild);

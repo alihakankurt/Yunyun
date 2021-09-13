@@ -14,6 +14,7 @@ namespace Yunyun.Core.Commands
     {
         [Name("Play")]
         [Command("play", RunMode = RunMode.Async)]
+        [Alias("p")]
         [Summary("Plays a track in voice channel.")]
         public async Task PlayCommand([Remainder] [Summary("The search query about track or URL.")] string query)
         {

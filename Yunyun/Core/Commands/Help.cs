@@ -20,7 +20,7 @@ namespace Yunyun.Core.Commands
             {
                 var embed = new EmbedBuilder()
                     .WithTitle($"{Context.Client.CurrentUser.Username}'s Commands")
-                    .WithDescription(string.Join("\n", ProviderService.GetService<CommandService>().Commands.Select(c => $"`{ConfigurationService.Prefix}{string.Join("|", c.Aliases)}` **-->** {c.Summary}")))
+                    .WithDescription(string.Join("\n", ProviderService.GetService<CommandService>().Commands.Select(c => $"`{ConfigurationService.Prefix}{string.Join("|", c.Aliases)}` --> {c.Summary}")))
                     .WithColor(255, 79, 0)
                     .WithFooter(footer => 
                     {
@@ -45,7 +45,7 @@ namespace Yunyun.Core.Commands
                         .WithTitle($"{cmd.Name}")
                         .AddField("Syntax", cmd.GetSyntax(), false)
                         .AddField("Summary", cmd.Summary, false)
-                        .AddField("Parameters", cmd.Parameters.Count() > 0 ? string.Join("\n", cmd.Parameters.Select(p => $"{(p.IsOptional ? $"`[{p}]`" : $"`<{p}>`")}**:** {p.Summary}")) : "None", false)
+                        .AddField("Parameters", cmd.Parameters.Count() > 0 ? string.Join("\n", cmd.Parameters.Select(p => $"{(p.IsOptional ? $"`[{p}]`" : $"`<{p}>`")} > {p.Summary}")) : "None", false)
                         .WithColor(255, 79, 0)
                         .WithCurrentTimestamp().Build();
 
