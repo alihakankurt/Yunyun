@@ -1,12 +1,15 @@
 using System;
+using System.IO;
 using Microsoft.Extensions.Configuration;
 
 namespace Yunyun.Core.Services
 {
     public static class ConfigurationService
     {
-        public static string Token { get; private set; }
-        public static string Prefix { get; private set; }
+        public static string Token { get; set; }
+        public static string Prefix { get; set; }
+
+        private static string ConfigPath = "configuration.yaml";
 
         public static void ReadConfigFile()
         {   
@@ -14,7 +17,7 @@ namespace Yunyun.Core.Services
             {
                 var config = new ConfigurationBuilder()
                     .SetBasePath(AppContext.BaseDirectory)
-                    .AddYamlFile("configuration.yaml")
+                    .AddYamlFile(ConfigPath)
                     .Build();
                 Token = config["Token"];
                 Prefix = config["Prefix"];
@@ -24,6 +27,14 @@ namespace Yunyun.Core.Services
             {
                 Console.WriteLine("Configuration could not be loaded! Exiting...");
                 Environment.Exit(0);
+            }
+        }
+
+        public static void SaveConfigFile()
+        {
+            using (var writer = new StreamWriter(Path.Combine(AppContext.BaseDirectory, ConfigPath)))
+            {
+                writer.Write($"token: \"{Token}\"\nprefix: {Prefix}");
             }
         }
     }
