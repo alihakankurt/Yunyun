@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Victoria;
 using Victoria.Enums;
 using Victoria.EventArgs;
@@ -92,6 +93,9 @@ namespace Yunyun.Core.Services
         
         public static async Task JoinAsync(IVoiceChannel voiceChannel, ITextChannel textChannel)
             => await _lavaNode.JoinAsync(voiceChannel, textChannel);
+
+        public static async Task MoveAsync(SocketVoiceChannel channel)
+            => await _lavaNode.MoveChannelAsync(channel);
         
         public static async Task LeaveAsync(IVoiceChannel voiceChannel)
             => await _lavaNode.LeaveAsync(voiceChannel);

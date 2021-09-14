@@ -23,10 +23,17 @@ namespace Yunyun.Core.Commands
                 return;
             }
 
-            if ((Context.User as SocketGuildUser).VoiceChannel != player.VoiceChannel)
+            var channel = (Context.User as SocketGuildUser).VoiceChannel;
+
+            if (channel != player.VoiceChannel)
             {
-                await ReplyAsync($"You need to be in `{player.VoiceChannel.Name}` for do that!");
-                return;
+                if (channel == null || (await player.VoiceChannel.GetUsersAsync().FlattenAsync()).Where(x => !x.IsBot).Count() > 0)
+                {
+                    await ReplyAsync($"You need to be in `{player.VoiceChannel.Name}` for do that!");
+                    return;
+                }
+
+                await LavalinkService.MoveAsync(channel);
             }
 
             if (player.Track is null)
