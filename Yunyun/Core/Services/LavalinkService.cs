@@ -6,8 +6,9 @@ using Discord.WebSocket;
 using Victoria;
 using Victoria.Enums;
 using Victoria.EventArgs;
+using Victoria.Filters;
 using Victoria.Payloads;
-using Victoria.Responses.Rest;
+using Victoria.Responses.Search;
 
 namespace Yunyun.Core.Services
 {
@@ -45,11 +46,10 @@ namespace Yunyun.Core.Services
 
         private static async Task OnTrackEnded(TrackEndedEventArgs e)
         {
-            if (!e.Reason.ShouldPlayNext())
+            if (e.Reason == TrackEndReason.Stopped)
                 return;
 
-            if (e.Player.Queue.TryDequeue(out var queueable))
-                return;
+            e.Player.Queue.TryDequeue(out var queueable);
 
             if (!(queueable is LavaTrack track))
                 return;
@@ -59,8 +59,7 @@ namespace Yunyun.Core.Services
 
         private static async Task OnTrackStuck(TrackStuckEventArgs e)
         {
-            if (e.Player.Queue.TryDequeue(out var queueable))
-                return;
+            e.Player.Queue.TryDequeue(out var queueable);
 
             if (!(queueable is LavaTrack track))
                 return;
@@ -70,8 +69,7 @@ namespace Yunyun.Core.Services
 
         private static async Task OnTrackException(TrackExceptionEventArgs e)
         {
-            if (e.Player.Queue.TryDequeue(out var queueable))
-                return;
+            e.Player.Queue.TryDequeue(out var queueable);
 
             if (!(queueable is LavaTrack track))
                 return;
@@ -107,7 +105,7 @@ namespace Yunyun.Core.Services
         {
             query = query.Trim('<', '>');
             return Uri.IsWellFormedUriString(query, UriKind.Absolute)
-                ? await _lavaNode.SearchAsync(query)
+                ? await _lavaNode.SearchAsync(SearchType.Direct, query)
                 : await _lavaNode.SearchYouTubeAsync(query);
         }
 

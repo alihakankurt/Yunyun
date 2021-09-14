@@ -4,8 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
-using Victoria.Enums;
+using Victoria.Responses.Search;
 using Yunyun.Core.Services;
 
 namespace Yunyun.Core.Commands
@@ -20,7 +19,7 @@ namespace Yunyun.Core.Commands
             var search = await LavalinkService.SearchAsync(query);
             var tracks = search.Tracks.Take(10);
 
-            if (search.LoadStatus == LoadStatus.LoadFailed || search.LoadStatus == LoadStatus.NoMatches)
+            if (search.Status == SearchStatus.LoadFailed || search.Status == SearchStatus.NoMatches)
             {
                 await ReplyAsync("No tracks could be found!");
                 return;

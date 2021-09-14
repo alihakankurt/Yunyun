@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -13,7 +14,7 @@ namespace Yunyun.Core.Commands
         [Name("Seek")]
         [Command("seek", RunMode = RunMode.Async)]
         [Summary("Seeks the current track.")]
-        public async Task SeekCommand([Remainder] [Summary("The timestamp that you want to seek. (hh:mm:ss)")] string timestamp)
+        public async Task SeekCommand([Remainder] [Summary("The timestamp that you want to seek. (mm:ss)")] string timestamp)
         {
             var player = LavalinkService.GetPlayer(Context.Guild);
 
@@ -42,9 +43,21 @@ namespace Yunyun.Core.Commands
                 return;
             }
 
-            if(!TimeSpan.TryParse(timestamp, out var result))
+            var match = Regex.Match(timestamp, "^([0-9]{1,2})[:.]?([0-9]{1,2})?$");
+            
+            if (!match.Success)
             {
                 await ReplyAsync("Invalid timestamp!");
+                return;
+            }
+
+            var result = TimeSpan.FromSeconds(match.Groups.Values.ElementAt(2).Success
+                ? Convert.ToInt32(match.Groups.Values.ElementAt(1).Value) * 60 + Convert.ToInt32(match.Groups.Values.ElementAt(2).Value)
+                : Convert.ToInt32(match.Groups.Values.ElementAt(1).Value));
+
+            if (player.Track.Duration.CompareTo(result) < 1)
+            {
+                await ReplyAsync("Timestamp can't exceed the current track's duration!");
                 return;
             }
 

@@ -6,6 +6,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Victoria.Enums;
+using Victoria.Responses.Search;
 using Yunyun.Core.Services;
 
 namespace Yunyun.Core.Commands
@@ -41,13 +42,13 @@ namespace Yunyun.Core.Commands
 
             var search = await LavalinkService.GetSearchResponseAsync(query);
 
-            if (search.LoadStatus == LoadStatus.LoadFailed || search.LoadStatus == LoadStatus.NoMatches)
+            if (search.Status == SearchStatus.LoadFailed || search.Status == SearchStatus.NoMatches)
             {
                 await ReplyAsync("No tracks could be found!");
                 return;
             }
 
-            else if (search.LoadStatus == LoadStatus.PlaylistLoaded)
+            else if (search.Status == SearchStatus.PlaylistLoaded)
             {
                 if (player.Track is null && player.PlayerState != PlayerState.Playing || player.PlayerState is PlayerState.Paused)
                 {
