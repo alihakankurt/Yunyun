@@ -11,8 +11,8 @@ namespace Yunyun.Core.Services
 
         private static string ConfigPath = "configuration.yaml";
 
-        public static void ReadConfigFile()
-        {   
+        public static void RunService()
+        {
             try
             {
                 var config = new ConfigurationBuilder()
@@ -27,14 +27,6 @@ namespace Yunyun.Core.Services
             {
                 Console.WriteLine("Configuration could not be loaded! Exiting...");
                 Environment.Exit(0);
-            }
-        }
-
-        public static void SaveConfigFile()
-        {
-            using (var writer = new StreamWriter(Path.Combine(AppContext.BaseDirectory, ConfigPath)))
-            {
-                writer.Write($"token: \"{Token}\"\nprefix: {Prefix}");
             }
         }
     }

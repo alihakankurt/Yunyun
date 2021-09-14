@@ -1,7 +1,9 @@
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Newtonsoft.Json;
 using Victoria;
 using Yunyun.Core.Services;
 
@@ -12,39 +14,41 @@ namespace Yunyun.Core.Commands
         [Name("Lyrics")]
         [Command("lyrics", RunMode = RunMode.Async)]
         [Summary("Shows the currently playing track's lyrics.")]
-        public async Task LyricsCommand()
+        public async Task LyricsCommand([Remainder] [Summary("Optional song name.")] string song = null)
         {
-            var player = LavalinkService.GetPlayer(Context.Guild);
+            song = song ?? LavalinkService.GetPlayer(Context.Guild)?.Track?.Title;
             
-            if (player is null)
+            if (string.IsNullOrWhiteSpace(song))
             {
-                await ReplyAsync("I'm not connected to a voice channel!");
+                await ReplyAsync("No song name provided for search.");
                 return;
             }
 
-            else if (player.Track is null)
+            try
             {
-                await ReplyAsync("Nothing is playing right now!");
-                return;
+                var lyrics = await LavalinkService.GetLyricsAsync(song);
+                lyrics.Lyrics = lyrics.Lyrics.Length > 2000 ? $"{lyrics.Lyrics.Substring(0, 1997)}..." : lyrics.Lyrics;
+
+                var embed = new EmbedBuilder()
+                    .WithTitle($"{lyrics.Title} - {lyrics.Author}")
+                    .WithColor(255, 79, 0)
+                    .WithDescription(lyrics.Lyrics)
+                    .WithThumbnailUrl(lyrics.Thumbnail)
+                    .WithUrl(lyrics.Links)
+                    .WithFooter(footer =>
+                    {
+                        footer.Text = $"Requested by {Context.User}";
+                        footer.IconUrl = Context.User.GetAvatarUrl();
+                    })
+                    .WithCurrentTimestamp().Build();
+
+                await ReplyAsync(embed: embed);
             }
             
-            var lyrics = await player.Track.FetchLyricsFromGeniusAsync();
-            lyrics = lyrics.Length > 2000 ? $"{lyrics.Substring(0, 1997)}..." : lyrics;
-            lyrics = string.IsNullOrEmpty(lyrics) ? "No lyrics could be found." : lyrics;
-                
-            var embed = new EmbedBuilder()
-                .WithTitle($"{player.Track.Title}")
-                .WithColor(255, 79, 0)
-                .WithDescription(lyrics)
-                .WithThumbnailUrl(await player.Track.FetchArtworkAsync())
-                .WithFooter(footer => 
-                {
-                    footer.Text = $"Requested by {Context.User}";
-                    footer.IconUrl = Context.User.GetAvatarUrl();
-                })
-                .WithCurrentTimestamp().Build();
-            
-            await ReplyAsync(embed: embed);
+            catch (HttpRequestException)
+            {
+                await ReplyAsync("No lyrics could be found!");
+            }
         }
     }
 }

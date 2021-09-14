@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using Discord;
@@ -19,7 +20,7 @@ namespace Yunyun.Core
 
         public Bot()
         {
-            ConfigurationService.ReadConfigFile();
+            ConfigurationService.RunService();
 
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
@@ -44,6 +45,7 @@ namespace Yunyun.Core
             var collection = new ServiceCollection()
                 .AddSingleton(_client)
                 .AddSingleton(_commands)
+                .AddSingleton(new HttpClient())
                 .AddLavaNode(n => 
                 {
                     n.SelfDeaf = true;
@@ -65,7 +67,8 @@ namespace Yunyun.Core
         {
             if (string.IsNullOrWhiteSpace(ConfigurationService.Token)) return;
             
-            LavalinkService.SetupLavalink();
+            LavalinkService.RunService();
+
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), ProviderService.Provider);
             await _client.LoginAsync(TokenType.Bot, ConfigurationService.Token);
             await _client.StartAsync();
@@ -118,7 +121,8 @@ namespace Yunyun.Core
             
             var argPos = 0;
 
-            if (!(message.HasStringPrefix(ConfigurationService.Prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))) return;
+            if (!(message.HasStringPrefix(ConfigurationService.Prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)))
+                return;
 
             var result = await _commands.ExecuteAsync(context, argPos, ProviderService.Provider);
 

@@ -1,8 +1,11 @@
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Victoria;
 using Victoria.Enums;
 using Victoria.EventArgs;
@@ -14,13 +17,14 @@ namespace Yunyun.Core.Services
 {
     public static class LavalinkService
     {
+        private static HttpClient _client = ProviderService.GetService<HttpClient>();
         private static readonly LavaNode _lavaNode = ProviderService.GetLavaNode();
         private static readonly EqualizerBand[] Flat = new EqualizerBand[] { new EqualizerBand(0, 0.0), new EqualizerBand(1, 0), new EqualizerBand(2, 0.0), new EqualizerBand(3, 0.0), new EqualizerBand(4, 0.0), new EqualizerBand(5, 0.0), new EqualizerBand(6, 0.0), new EqualizerBand(7, 0.0), new EqualizerBand(8, 0.0), new EqualizerBand(9, 0.0), new EqualizerBand(10, 0.0), new EqualizerBand(11, 0.0), new EqualizerBand(12, 0.0), new EqualizerBand(13, 0.0), new EqualizerBand(14, 0.0) };
         private static readonly EqualizerBand[] Boost = new EqualizerBand[] { new EqualizerBand(0, -0.075), new EqualizerBand(1, 0.125), new EqualizerBand(2, 0.125), new EqualizerBand(3, 0.1), new EqualizerBand(4, 0.1), new EqualizerBand(5, 0.05), new EqualizerBand(6, 0.075), new EqualizerBand(7, 0.0), new EqualizerBand(8, 0.0), new EqualizerBand(9, 0.0), new EqualizerBand(10, 0.0), new EqualizerBand(11, 0.0), new EqualizerBand(12, 0.125), new EqualizerBand(13, 0.15), new EqualizerBand(14, 0.05) };
         private static readonly EqualizerBand[] Piano = new EqualizerBand[] { new EqualizerBand(0, -0.25), new EqualizerBand(1, -0.25), new EqualizerBand(2, -0.125), new EqualizerBand(3, 0.0), new EqualizerBand(4, 0.25), new EqualizerBand(5, 0.25), new EqualizerBand(6, 0.0), new EqualizerBand(7, -0.25), new EqualizerBand(8, -0.25), new EqualizerBand(9, 0.0), new EqualizerBand(10, 0.0), new EqualizerBand(11, 0.5), new EqualizerBand(12, 0.25), new EqualizerBand(13, -0.025), new EqualizerBand(14, 0.0) };
         private static readonly EqualizerBand[] Metal = new EqualizerBand[] { new EqualizerBand(0, 0.0), new EqualizerBand(1, 0.1), new EqualizerBand(2, 0.1), new EqualizerBand(3, 0.15), new EqualizerBand(4, 0.13), new EqualizerBand(5, 0.1), new EqualizerBand(6, 0.0), new EqualizerBand(7, 0.125), new EqualizerBand(8, 0.175), new EqualizerBand(9, 0.175), new EqualizerBand(10, 0.125), new EqualizerBand(11, 0.125), new EqualizerBand(12, 0.1), new EqualizerBand(13, 0.075), new EqualizerBand(14, 0.0) };
 
-        public static void SetupLavalink()
+        public static void RunService()
         {
             _lavaNode.OnLog += OnLog;
             _lavaNode.OnTrackStarted += OnTrackStart;
@@ -132,6 +136,32 @@ namespace Yunyun.Core.Services
             var equalizer = new EqualizerBand[] { new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0) };
             equalizer[band - 1] = new EqualizerBand(band - 1, gain / 10);
             return equalizer;
+        }
+
+        public async static Task<LyricsDto> GetLyricsAsync(string song)
+            => JsonConvert.DeserializeObject<LyricsDto>(await _client.GetStringAsync($"https://some-random-api.ml/lyrics?title={song}"));
+    }
+
+    public class LyricsDto
+    {
+        public string Title { get; set; }
+        public string Author { get; set; }
+        public string Lyrics { get; set; }
+        [JsonConverter(typeof(GeniusConverter))] public string Thumbnail { get; set; }
+        [JsonConverter(typeof(GeniusConverter))] public string Links { get; set; }
+    }
+
+    public class GeniusConverter : JsonConverter<string>
+    {
+        public override string ReadJson(JsonReader reader, Type objectType, string existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            JObject jObject = JObject.Load(reader);
+            return jObject.GetValue("genius").ToString();
+        }
+
+        public override void WriteJson(JsonWriter writer, string value, JsonSerializer serializer)
+        {
+
         }
     }
 }
