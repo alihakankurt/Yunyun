@@ -154,14 +154,8 @@ namespace Yunyun.Core.Services
     public class GeniusConverter : JsonConverter<string>
     {
         public override string ReadJson(JsonReader reader, Type objectType, string existingValue, bool hasExistingValue, JsonSerializer serializer)
-        {
-            JObject jObject = JObject.Load(reader);
-            return jObject.GetValue("genius").ToString();
-        }
+            => JObject.Load(reader).GetValue("genius").ToString();
 
-        public override void WriteJson(JsonWriter writer, string value, JsonSerializer serializer)
-        {
-
-        }
+        public override void WriteJson(JsonWriter writer, string value, JsonSerializer serializer) { }
     }
 }

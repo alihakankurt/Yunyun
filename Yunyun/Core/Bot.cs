@@ -65,7 +65,8 @@ namespace Yunyun.Core
 
         public async Task RunAsync()
         {
-            if (string.IsNullOrWhiteSpace(ConfigurationService.Token)) return;
+            if (string.IsNullOrWhiteSpace(ConfigurationService.Token))
+                return;
             
             LavalinkService.RunService();
 
@@ -100,15 +101,9 @@ namespace Yunyun.Core
         private async Task OnVoiceStateUpdate(SocketUser user, SocketVoiceState before, SocketVoiceState after)
         {
             if (!user.IsBot)
-            {
                 if (before.VoiceChannel != null && after.VoiceChannel == null)
-                {
                     if (before.VoiceChannel.Users.Where(u => !u.IsBot).Count() < 1)
-                    {
                         await LavalinkService.LeaveAsync(before.VoiceChannel);
-                    }
-                }
-            }
         }
 
         private async Task OnMessage(SocketMessage arg)

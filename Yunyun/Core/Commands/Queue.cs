@@ -24,14 +24,8 @@ namespace Yunyun.Core.Commands
 
             var tracks = player.Queue.Where((t, i) => i >= page * 10 - 10 && i < page * 10);
             
-            if (tracks.Count() < 1)
-            {
-                await ReplyAsync("Empty page.");
-                return;
-            }
-
             var embed = new EmbedBuilder()
-                .WithDescription(string.Join("\n", tracks.Select((t, i) => $"`{i + 1})` {t.Title} - {t.Author}")))
+                .WithDescription(tracks.Count() < 1 ? "**Empty**" : string.Join("\n", tracks.Select((t, i) => $"`{i + 1})` {t.Title} - {t.Author}")))
                 .WithColor(255, 79, 0)
                 .WithFooter(footer => 
                 {

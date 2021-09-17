@@ -33,9 +33,8 @@ namespace Yunyun.Core.Commands
                     footer.IconUrl = Context.User.GetAvatarUrl();
                 })
                 .AddField("Player State", player is null ? "Not connected" : $"Voice Channel: <#{player.VoiceChannel.Id}>\nText Channel: {player.TextChannel.Mention}\nState: {player.PlayerState.ToString()}\nVolume: {player.Volume}", false)
-                .AddField("Virtual Memory Usage", $"{process.VirtualMemorySize64 / 1024 / 1024} MB", false)
-                .AddField("Physical Memory Usage", $"{process.WorkingSet64 / 1024 / 1024} MB", false)
-                .AddField("Total Processor Time", process.TotalProcessorTime, false)
+                .AddField("RAM Usage", $"{process.PrivateMemorySize64 / 1048576} MB", true)
+                .AddField("CPU Time", $"{process.TotalProcessorTime.TotalMilliseconds} ms", true)
                 .WithColor(255, 79, 0)
                 .WithCurrentTimestamp().Build();
 
