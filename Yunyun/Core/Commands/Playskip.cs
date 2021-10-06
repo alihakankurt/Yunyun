@@ -39,7 +39,7 @@ namespace Yunyun.Core.Commands
                 await LavalinkService.MoveAsync(channel);
             }
 
-            var search = await LavalinkService.GetSearchResponseAsync(query);
+            var search = await LavalinkService.SearchAsync(query);
 
             if (player.Track is null && player.PlayerState != PlayerState.Playing || player.PlayerState is PlayerState.Paused)
             {
@@ -56,9 +56,8 @@ namespace Yunyun.Core.Commands
             else if (search.Status == SearchStatus.PlaylistLoaded)
             {
                 var track = search.Tracks.First();
-                    await player.PlayAsync(track);
-                    foreach (var t in search.Tracks.Where((t, i) => i != 0))
-                        player.Queue.Enqueue(t);
+                await player.PlayAsync(track);
+                player.Queue.Enqueue(search.Tracks.TakeLast(search.Tracks.Count - 1));
                 
                 await ReplyAsync($"{search.Tracks.Count()} tracks added to queue.");
             }

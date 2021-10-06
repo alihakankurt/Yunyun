@@ -16,12 +16,10 @@ namespace Yunyun.Core
     {
         private DiscordSocketClient _client;
         private CommandService _commands;
-        private static LavaNode _lavaNode;
+        private LavaNode _lavaNode;
 
         public Bot()
         {
-            ConfigurationService.RunService();
-
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Verbose,
@@ -46,14 +44,13 @@ namespace Yunyun.Core
                 .AddSingleton(_client)
                 .AddSingleton(_commands)
                 .AddSingleton(new HttpClient())
-                .AddLavaNode(n => 
+                .AddLavaNode(x => 
                 {
-                    n.SelfDeaf = true;
-                    n.LogSeverity = LogSeverity.Verbose;
+                    x.SelfDeaf = true;
+                    x.LogSeverity = LogSeverity.Verbose;
                 });
             
             ProviderService.SetProvider(collection);
-            
 
             _lavaNode = ProviderService.GetLavaNode();
             _commands.Log += DiscordLog;
@@ -65,10 +62,11 @@ namespace Yunyun.Core
 
         public async Task RunAsync()
         {
+            ConfigurationService.RunService();
+            LavalinkService.RunService();
+
             if (string.IsNullOrWhiteSpace(ConfigurationService.Token))
                 return;
-            
-            LavalinkService.RunService();
 
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), ProviderService.Provider);
             await _client.LoginAsync(TokenType.Bot, ConfigurationService.Token);

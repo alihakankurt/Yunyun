@@ -12,6 +12,7 @@ namespace Yunyun.Core.Commands
     {
         [Name("Volume")]
         [Command("volume", RunMode = RunMode.Async)]
+        [Alias("vol")]
         [Summary("Sets the volume of playback.")]
         public async Task VolumeCommand([Remainder] [Summary("An integer between 1 and 150.")] ushort volume)
         {

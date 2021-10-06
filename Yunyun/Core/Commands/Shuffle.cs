@@ -1,23 +1,23 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Victoria.Enums;
 using Yunyun.Core.Services;
 
 namespace Yunyun.Core.Commands
 {
     public partial class YunCommandModule : ModuleBase<SocketCommandContext>
     {
-        [Name("Skip")]
-        [Command("skip", RunMode = RunMode.Async)]
-        [Alias("s")]
-        [Summary("Skips the current track.")]
-        public async Task SkipCommand()
+        [Name("Shuffle")]
+        [Command("shuffle", RunMode = RunMode.Async)]
+        [Summary("Shuffles the queue.")]
+        public async Task ShuffleCommand()
         {
             var player = LavalinkService.GetPlayer(Context.Guild);
-            
+
             if (player is null)
             {
                 await ReplyAsync("I'm not connected to a voice channel!");
@@ -36,9 +36,9 @@ namespace Yunyun.Core.Commands
 
                 await LavalinkService.MoveAsync(channel);
             }
-            
-            await player.SeekAsync(player.Track.Duration);
-            await ReplyAsync("Skipped.");
+
+            player.Queue.Shuffle();
+            await ReplyAsync("Queue shuffled.");
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Discord;
@@ -27,24 +28,25 @@ namespace Yunyun.Core.Services
         public static void RunService()
         {
             _lavaNode.OnLog += OnLog;
-            _lavaNode.OnTrackStarted += OnTrackStart;
+            _lavaNode.OnTrackStarted += OnTrackStarted;
             _lavaNode.OnTrackEnded += OnTrackEnded;
             _lavaNode.OnTrackStuck += OnTrackStuck;
             _lavaNode.OnTrackException += OnTrackException;
         }
-        
+
         private static Task OnLog(LogMessage arg)
         {
             Console.WriteLine($"[{DateTime.Now.ToLongTimeString()}] ({arg.Severity.ToString().ToUpper()}) Lavalink => {(arg.Exception is null ? arg.Message : arg.Exception.InnerException.Message)}");
             return Task.CompletedTask;
         }
 
-        private static async Task OnTrackStart(TrackStartEventArgs e)
+        private static async Task OnTrackStarted(TrackStartEventArgs e)
         {
             var embed = new EmbedBuilder()
                 .WithTitle("🎶Now Playing")
                 .WithDescription($"{e.Track.Title} - {e.Track.Author}")
                 .WithColor(255, 79, 0).Build();
+
             await e.Player.TextChannel.SendMessageAsync(embed: embed);
         }
 
@@ -92,20 +94,17 @@ namespace Yunyun.Core.Services
                 return null;
             }
         }
-        
+
         public static async Task JoinAsync(IVoiceChannel voiceChannel, ITextChannel textChannel)
             => await _lavaNode.JoinAsync(voiceChannel, textChannel);
 
         public static async Task MoveAsync(SocketVoiceChannel channel)
             => await _lavaNode.MoveChannelAsync(channel);
-        
+
         public static async Task LeaveAsync(IVoiceChannel voiceChannel)
             => await _lavaNode.LeaveAsync(voiceChannel);
 
         public static async Task<SearchResponse> SearchAsync(string query)
-            => await _lavaNode.SearchYouTubeAsync(query);
-
-        public static async Task<SearchResponse> GetSearchResponseAsync(string query)
         {
             query = query.Trim('<', '>');
             return Uri.IsWellFormedUriString(query, UriKind.Absolute)
@@ -130,9 +129,9 @@ namespace Yunyun.Core.Services
             if (band < 1 || band > 15)
                 return null;
 
-            if (gain < -10 || band > 10)
+            if (gain < -2.5 || band > 10)
                 return null;
-            
+
             var equalizer = new EqualizerBand[] { new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0), new EqualizerBand(0, 0.0) };
             equalizer[band - 1] = new EqualizerBand(band - 1, gain / 10);
             return equalizer;
