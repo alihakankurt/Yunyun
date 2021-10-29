@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Yunyun.Core.Extensions;
 using Yunyun.Core.Services;
 
 namespace Yunyun.Core.Commands
@@ -32,12 +31,17 @@ namespace Yunyun.Core.Commands
                     footer.Text = $"Requested by {Context.User}";
                     footer.IconUrl = Context.User.GetAvatarUrl();
                 })
-                .AddField("Player State", player is null ? "Not connected" : $"Voice Channel: <#{player.VoiceChannel.Id}>\nText Channel: {player.TextChannel.Mention}\nState: {player.PlayerState.ToString()}\nVolume: {player.Volume}", false)
+                .AddField("Latency", $"{Context.Client.Latency} ms", true)
+                .AddField(".NET Version", "Core 3.1", true)
+                .AddField("C# Version", "9.0", true)
+                .AddField("Bot Version", ConfigurationService.Version, true)
+                .AddField("Discord.NET Version", "2.4.0", true)
+                .AddField("Player State", player is null ? "Not connected" : $"Voice Channel: <#{player.VoiceChannel.Id}>\nText Channel: {player.TextChannel.Mention}\nState: {player.PlayerState}\nVolume: {player.Volume}", false)
                 .AddField("RAM Usage", $"{process.PrivateMemorySize64 / 1048576} MB", true)
                 .AddField("CPU Time", $"{process.TotalProcessorTime.TotalMilliseconds} ms", true)
                 .WithColor(255, 79, 0)
                 .WithCurrentTimestamp().Build();
-
+            
             await ReplyAsync(embed: embed);
         }
     }

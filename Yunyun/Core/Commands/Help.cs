@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Yunyun.Core.Extensions;
 using Yunyun.Core.Services;
 
 namespace Yunyun.Core.Commands

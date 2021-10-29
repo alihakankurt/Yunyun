@@ -14,9 +14,9 @@ namespace Yunyun.Core
 {
     public class Bot
     {
-        private DiscordSocketClient _client;
-        private CommandService _commands;
-        private LavaNode _lavaNode;
+        private readonly DiscordSocketClient _client;
+        private readonly CommandService _commands;
+        private readonly LavaNode _lavaNode;
 
         public Bot()
         {

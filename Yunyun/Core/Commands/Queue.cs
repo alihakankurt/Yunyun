@@ -11,6 +11,7 @@ namespace Yunyun.Core.Commands
     {
         [Name("Queue")]
         [Command("queue", RunMode = RunMode.Async)]
+        [Alias("q")]
         [Summary("Shows the queue.")]
         public async Task QueueCommand([Remainder] [Summary("The page that you want to see.")] ushort page = 1)
         {
@@ -22,10 +23,8 @@ namespace Yunyun.Core.Commands
                 return;
             }
 
-            var tracks = player.Queue.Where((t, i) => i >= page * 10 - 10 && i < page * 10);
-            
             var embed = new EmbedBuilder()
-                .WithDescription(tracks.Count() < 1 ? "**Empty**" : string.Join("\n", tracks.Select((t, i) => $"`{i + 1})` {t.Title} - {t.Author}")))
+                .WithDescription(string.Join("\n", player.Queue.Where((t, i) => i >= page * 10 - 10 && i < page * 10).Select((t, i) => $"`{i + 1})` {t.Title} - {t.Author}")))
                 .WithColor(255, 79, 0)
                 .WithFooter(footer => 
                 {

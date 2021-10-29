@@ -18,7 +18,7 @@ namespace Yunyun.Core.Services
 {
     public static class LavalinkService
     {
-        private static HttpClient _client = ProviderService.GetService<HttpClient>();
+        private static readonly HttpClient _client = ProviderService.GetService<HttpClient>();
         private static readonly LavaNode _lavaNode = ProviderService.GetLavaNode();
         private static readonly EqualizerBand[] Flat = new EqualizerBand[] { new EqualizerBand(0, 0.0), new EqualizerBand(1, 0), new EqualizerBand(2, 0.0), new EqualizerBand(3, 0.0), new EqualizerBand(4, 0.0), new EqualizerBand(5, 0.0), new EqualizerBand(6, 0.0), new EqualizerBand(7, 0.0), new EqualizerBand(8, 0.0), new EqualizerBand(9, 0.0), new EqualizerBand(10, 0.0), new EqualizerBand(11, 0.0), new EqualizerBand(12, 0.0), new EqualizerBand(13, 0.0), new EqualizerBand(14, 0.0) };
         private static readonly EqualizerBand[] Boost = new EqualizerBand[] { new EqualizerBand(0, -0.075), new EqualizerBand(1, 0.125), new EqualizerBand(2, 0.125), new EqualizerBand(3, 0.1), new EqualizerBand(4, 0.1), new EqualizerBand(5, 0.05), new EqualizerBand(6, 0.075), new EqualizerBand(7, 0.0), new EqualizerBand(8, 0.0), new EqualizerBand(9, 0.0), new EqualizerBand(10, 0.0), new EqualizerBand(11, 0.0), new EqualizerBand(12, 0.125), new EqualizerBand(13, 0.15), new EqualizerBand(14, 0.05) };
@@ -55,7 +55,8 @@ namespace Yunyun.Core.Services
             if (e.Reason == TrackEndReason.Stopped)
                 return;
 
-            e.Player.Queue.TryDequeue(out var queueable);
+            if (!e.Player.Queue.TryDequeue(out var queueable))
+                return;
 
             if (!(queueable is LavaTrack track))
                 return;
@@ -65,7 +66,8 @@ namespace Yunyun.Core.Services
 
         private static async Task OnTrackStuck(TrackStuckEventArgs e)
         {
-            e.Player.Queue.TryDequeue(out var queueable);
+            if (!e.Player.Queue.TryDequeue(out var queueable))
+                return;
 
             if (!(queueable is LavaTrack track))
                 return;
@@ -75,7 +77,8 @@ namespace Yunyun.Core.Services
 
         private static async Task OnTrackException(TrackExceptionEventArgs e)
         {
-            e.Player.Queue.TryDequeue(out var queueable);
+            if (!e.Player.Queue.TryDequeue(out var queueable))
+                return;
 
             if (!(queueable is LavaTrack track))
                 return;
@@ -84,16 +87,7 @@ namespace Yunyun.Core.Services
         }
 
         public static LavaPlayer GetPlayer(IGuild guild)
-        {
-            try
-            {
-                return _lavaNode.GetPlayer(guild);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
+            => _lavaNode.TryGetPlayer(guild, out var player) ? player : null;
 
         public static async Task JoinAsync(IVoiceChannel voiceChannel, ITextChannel textChannel)
             => await _lavaNode.JoinAsync(voiceChannel, textChannel);
@@ -109,7 +103,7 @@ namespace Yunyun.Core.Services
             query = query.Trim('<', '>');
             return Uri.IsWellFormedUriString(query, UriKind.Absolute)
                 ? await _lavaNode.SearchAsync(SearchType.Direct, query)
-                : await _lavaNode.SearchYouTubeAsync(query);
+                : await _lavaNode.SearchAsync(SearchType.YouTube, query);
         }
 
         public static EqualizerBand[] GetEqualizer(string preset)

@@ -13,28 +13,31 @@ namespace Yunyun.Core.Commands
     {
         [Name("Lyrics")]
         [Command("lyrics", RunMode = RunMode.Async)]
+        [Alias("l")]
         [Summary("Shows the currently playing track's lyrics.")]
         public async Task LyricsCommand([Remainder] [Summary("Optional song name.")] string song = null)
         {
-            song = song ?? LavalinkService.GetPlayer(Context.Guild)?.Track?.Title;
-            
             if (string.IsNullOrWhiteSpace(song))
             {
-                await ReplyAsync("No song name provided for search.");
-                return;
-            }
+                var player = LavalinkService.GetPlayer(Context.Guild);
+                if (player == null || player?.Track == null)
+                {
+                    await ReplyAsync("No song name provided for search.");
+                    return;
+                }
 
-            try
-            {
-                var lyrics = await LavalinkService.GetLyricsAsync(song);
-                lyrics.Lyrics = lyrics.Lyrics.Length > 2000 ? $"{lyrics.Lyrics.Substring(0, 1997)}..." : lyrics.Lyrics;
+                string lyrics = await player.Track.FetchLyricsFromGeniusAsync();
+                if (string.IsNullOrWhiteSpace(lyrics))
+                {
+                    await LyricsCommand(player.Track.Title);
+                    return;
+                }
 
                 var embed = new EmbedBuilder()
-                    .WithTitle($"{lyrics.Title} - {lyrics.Author}")
+                    .WithTitle($"{player.Track.Title} - {player.Track.Author}")
                     .WithColor(255, 79, 0)
-                    .WithDescription(lyrics.Lyrics)
-                    .WithThumbnailUrl(lyrics.Thumbnail)
-                    .WithUrl(lyrics.Links)
+                    .WithDescription(lyrics)
+                    .WithThumbnailUrl(await player.Track.FetchArtworkAsync())
                     .WithFooter(footer =>
                     {
                         footer.Text = $"Requested by {Context.User}";
@@ -44,10 +47,34 @@ namespace Yunyun.Core.Commands
 
                 await ReplyAsync(embed: embed);
             }
-            
-            catch (HttpRequestException)
+
+            else
             {
-                await ReplyAsync("No lyrics could be found!");
+                try
+                {
+                    var lyrics = await LavalinkService.GetLyricsAsync(song);
+                    lyrics.Lyrics = lyrics.Lyrics.Length > 2000 ? $"{lyrics.Lyrics.Substring(0, 1997)}..." : lyrics.Lyrics;
+
+                    var embed = new EmbedBuilder()
+                        .WithTitle($"{lyrics.Title} - {lyrics.Author}")
+                        .WithColor(255, 79, 0)
+                        .WithDescription(lyrics.Lyrics)
+                        .WithThumbnailUrl(lyrics.Thumbnail)
+                        .WithUrl(lyrics.Links)
+                        .WithFooter(footer =>
+                        {
+                            footer.Text = $"Requested by {Context.User}";
+                            footer.IconUrl = Context.User.GetAvatarUrl();
+                        })
+                        .WithCurrentTimestamp().Build();
+
+                    await ReplyAsync(embed: embed);
+                }
+
+                catch (HttpRequestException)
+                {
+                    await ReplyAsync("No lyrics could be found!");
+                }
             }
         }
     }

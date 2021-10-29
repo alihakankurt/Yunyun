@@ -8,8 +8,9 @@ namespace Yunyun.Core.Services
     {
         public static string Token { get; set; }
         public static string Prefix { get; set; }
+        public static string Version { get; set; }
 
-        private static string ConfigPath = "configuration.yaml";
+        private static readonly string ConfigPath = "configuration.yaml";
 
         public static void RunService()
         {
@@ -19,8 +20,10 @@ namespace Yunyun.Core.Services
                     .SetBasePath(AppContext.BaseDirectory)
                     .AddYamlFile(ConfigPath)
                     .Build();
+
                 Token = config["Token"];
                 Prefix = config["Prefix"];
+                Version = config["Version"];
             }
 
             catch (Exception)

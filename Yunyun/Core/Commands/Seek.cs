@@ -13,6 +13,7 @@ namespace Yunyun.Core.Commands
     {
         [Name("Seek")]
         [Command("seek", RunMode = RunMode.Async)]
+        [Alias("jump")]
         [Summary("Seeks the current track.")]
         public async Task SeekCommand([Remainder] [Summary("The timestamp that you want to seek. (mm:ss)")] string timestamp)
         {
