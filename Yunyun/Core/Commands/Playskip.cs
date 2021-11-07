@@ -5,7 +5,6 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Victoria.Enums;
-using Victoria.Responses.Search;
 using Yunyun.Core.Services;
 
 namespace Yunyun.Core.Commands
@@ -47,17 +46,18 @@ namespace Yunyun.Core.Commands
                 return;
             }
 
-            else if (search.Status == SearchStatus.LoadFailed || search.Status == SearchStatus.NoMatches)
+            else if (search.LoadStatus == LoadStatus.LoadFailed || search.LoadStatus == LoadStatus.NoMatches)
             {
                 await ReplyAsync("No tracks could be found!");
                 return;
             }
 
-            else if (search.Status == SearchStatus.PlaylistLoaded)
+            else if (search.LoadStatus == LoadStatus.PlaylistLoaded)
             {
                 var track = search.Tracks.First();
                 await player.PlayAsync(track);
-                player.Queue.Enqueue(search.Tracks.TakeLast(search.Tracks.Count - 1));
+                foreach (var t in search.Tracks.TakeLast(search.Tracks.Count - 1))
+                    player.Queue.Enqueue(t);
                 
                 await ReplyAsync($"{search.Tracks.Count()} tracks added to queue.");
             }

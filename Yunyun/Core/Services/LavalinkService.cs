@@ -1,18 +1,15 @@
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Discord;
-using Discord.Commands;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Victoria;
 using Victoria.Enums;
 using Victoria.EventArgs;
-using Victoria.Filters;
 using Victoria.Payloads;
-using Victoria.Responses.Search;
+using Victoria.Responses.Rest;
 
 namespace Yunyun.Core.Services
 {
@@ -102,8 +99,8 @@ namespace Yunyun.Core.Services
         {
             query = query.Trim('<', '>');
             return Uri.IsWellFormedUriString(query, UriKind.Absolute)
-                ? await _lavaNode.SearchAsync(SearchType.Direct, query)
-                : await _lavaNode.SearchAsync(SearchType.YouTube, query);
+                ? await _lavaNode.SearchAsync(query)
+                : await _lavaNode.SearchYouTubeAsync(query);
         }
 
         public static EqualizerBand[] GetEqualizer(string preset)

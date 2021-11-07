@@ -1,12 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Victoria.Enums;
-using Victoria.Responses.Search;
 using Yunyun.Core.Services;
 
 namespace Yunyun.Core.Commands
@@ -42,24 +40,26 @@ namespace Yunyun.Core.Commands
 
             var search = await LavalinkService.SearchAsync(query);
 
-            if (search.Status == SearchStatus.LoadFailed || search.Status == SearchStatus.NoMatches)
+            if (search.LoadStatus == LoadStatus.LoadFailed || search.LoadStatus == LoadStatus.NoMatches)
             {
                 await ReplyAsync("No tracks could be found!");
                 return;
             }
 
-            else if (search.Status == SearchStatus.PlaylistLoaded)
+            else if (search.LoadStatus == LoadStatus.PlaylistLoaded)
             {
                 if (player.Track is null && player.PlayerState != PlayerState.Playing || player.PlayerState is PlayerState.Paused)
                 {
                     var track = search.Tracks.First();
                     await player.PlayAsync(track);
-                    player.Queue.Enqueue(search.Tracks.TakeLast(search.Tracks.Count - 1));
+                    foreach (var t in search.Tracks.TakeLast(search.Tracks.Count - 1))
+                        player.Queue.Enqueue(t);
                 }
                 
                 else
                 {
-                    player.Queue.Enqueue(search.Tracks);
+                    foreach (var t in search.Tracks)
+                        player.Queue.Enqueue(t);
                 }
                 
                 await ReplyAsync($"{search.Tracks.Count()} tracks added to queue.");

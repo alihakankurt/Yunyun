@@ -36,8 +36,13 @@ namespace Yunyun.Core.Commands
 
                 await LavalinkService.MoveAsync(channel);
             }
-            
-            await player.SeekAsync(player.Track.Duration);
+
+            if (player.Queue.Count == 0)
+                await player.SeekAsync(player.Track.Duration);
+
+            else
+                await player.SkipAsync();
+
             await ReplyAsync("Skipped.");
         }
     }
