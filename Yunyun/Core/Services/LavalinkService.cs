@@ -3,10 +3,8 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Victoria;
-using Victoria.Enums;
 using Victoria.EventArgs;
 using Victoria.Payloads;
 using Victoria.Responses.Rest;
@@ -17,6 +15,7 @@ namespace Yunyun.Core.Services
     {
         private static readonly HttpClient _client = ProviderService.GetService<HttpClient>();
         private static readonly LavaNode _lavaNode = ProviderService.GetLavaNode();
+        private static readonly string _lyricsUrl = "https://api.genius.com/search?access_token={0}&q={1}&page=1&per_page=1";
         private static readonly EqualizerBand[] Flat = new EqualizerBand[] { new EqualizerBand(0, 0.0), new EqualizerBand(1, 0), new EqualizerBand(2, 0.0), new EqualizerBand(3, 0.0), new EqualizerBand(4, 0.0), new EqualizerBand(5, 0.0), new EqualizerBand(6, 0.0), new EqualizerBand(7, 0.0), new EqualizerBand(8, 0.0), new EqualizerBand(9, 0.0), new EqualizerBand(10, 0.0), new EqualizerBand(11, 0.0), new EqualizerBand(12, 0.0), new EqualizerBand(13, 0.0), new EqualizerBand(14, 0.0) };
         private static readonly EqualizerBand[] Boost = new EqualizerBand[] { new EqualizerBand(0, -0.075), new EqualizerBand(1, 0.125), new EqualizerBand(2, 0.125), new EqualizerBand(3, 0.1), new EqualizerBand(4, 0.1), new EqualizerBand(5, 0.05), new EqualizerBand(6, 0.075), new EqualizerBand(7, 0.0), new EqualizerBand(8, 0.0), new EqualizerBand(9, 0.0), new EqualizerBand(10, 0.0), new EqualizerBand(11, 0.0), new EqualizerBand(12, 0.125), new EqualizerBand(13, 0.15), new EqualizerBand(14, 0.05) };
         private static readonly EqualizerBand[] Piano = new EqualizerBand[] { new EqualizerBand(0, -0.25), new EqualizerBand(1, -0.25), new EqualizerBand(2, -0.125), new EqualizerBand(3, 0.0), new EqualizerBand(4, 0.25), new EqualizerBand(5, 0.25), new EqualizerBand(6, 0.0), new EqualizerBand(7, -0.25), new EqualizerBand(8, -0.25), new EqualizerBand(9, 0.0), new EqualizerBand(10, 0.0), new EqualizerBand(11, 0.5), new EqualizerBand(12, 0.25), new EqualizerBand(13, -0.025), new EqualizerBand(14, 0.0) };
@@ -49,7 +48,7 @@ namespace Yunyun.Core.Services
 
         private static async Task OnTrackEnded(TrackEndedEventArgs e)
         {
-            if (e.Reason == TrackEndReason.Stopped)
+            if (!e.Reason.ShouldPlayNext())
                 return;
 
             if (!e.Player.Queue.TryDequeue(out var queueable))
@@ -128,24 +127,73 @@ namespace Yunyun.Core.Services
             return equalizer;
         }
 
-        public async static Task<LyricsDto> GetLyricsAsync(string song)
-            => JsonConvert.DeserializeObject<LyricsDto>(await _client.GetStringAsync($"https://some-random-api.ml/lyrics?title={song}"));
-    }
+        public async static Task<GeniusResponse> SearchGeniusAsync(string query)
+        {
+            try
+            {
+                query = query.Split('(')[0].Split('[')[0];
+                var json = JObject.Parse(await _client.GetStringAsync(string.Format(_lyricsUrl, ConfigurationService.GeniusToken, query)));
+                var hits = json["response"]["hits"][0]["result"];
+                var title = (string)hits["full_title"];
+                var lyricsUrl = $"https://genius.com{hits["path"]}";
+                var thumbnail = (string)hits["header_image_url"];
+                
+                var html = (await _client.GetStringAsync(lyricsUrl))[120000..];
+                int index = html.IndexOf("<div class=\"lyrics\"");
+                int length;
+                
+                if (index > -1)
+                {
+                    index += html[index..].IndexOf("<p>") + 3;
+                    length = html[index..].IndexOf("</p>");
+                }
+                
+                else
+                {
+                    index = html.IndexOf("<div data-lyrics-container=\"true\"");
+                    index += html[index..].IndexOf(">") + 1;
+                    length = html[index..].IndexOf("</div>");
+                }
+                
+                var lyrics = html[index..(index + length)].Replace("<br>", Environment.NewLine);
+                index = 0;
+                for (int i = 0; i < lyrics.Length; i++)
+                {
+                    if (lyrics[i] == '<')
+                    {
+                        index = i;
+                    }
 
-    public class LyricsDto
-    {
-        public string Title { get; set; }
-        public string Author { get; set; }
-        public string Lyrics { get; set; }
-        [JsonConverter(typeof(GeniusConverter))] public string Thumbnail { get; set; }
-        [JsonConverter(typeof(GeniusConverter))] public string Links { get; set; }
-    }
+                    else if (lyrics[i] == '>')
+                    {
+                        lyrics = lyrics.Remove(index, i - index + 1);
+                        i = index;
+                    }
+                }
+                lyrics = string.Join("\n", lyrics.Split("\n", StringSplitOptions.RemoveEmptyEntries));
+                return new GeniusResponse(title, lyrics, lyricsUrl, thumbnail);
+            }
 
-    public class GeniusConverter : JsonConverter<string>
-    {
-        public override string ReadJson(JsonReader reader, Type objectType, string existingValue, bool hasExistingValue, JsonSerializer serializer)
-            => JObject.Load(reader).GetValue("genius").ToString();
+            catch
+            {
+                return null;
+            }
+        }
 
-        public override void WriteJson(JsonWriter writer, string value, JsonSerializer serializer) { }
+        public class GeniusResponse
+        {
+            public string Title { get; set; }
+            public string Lyrics { get; set; }
+            public string Url { get; set; }
+            public string Thumbnail { get; set; }
+
+            public GeniusResponse(string title, string lyrics, string url, string thumbnail)
+            {
+                Title = title;
+                Lyrics = lyrics;
+                Url = url;
+                Thumbnail = thumbnail;
+            }
+        }
     }
 }

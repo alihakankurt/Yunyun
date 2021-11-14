@@ -8,6 +8,7 @@ namespace Yunyun.Core.Services
         public static string Token { get; set; }
         public static string Prefix { get; set; }
         public static string Version { get; set; }
+        public static string GeniusToken { get; set; }
 
         private static readonly string ConfigPath = "configuration.yaml";
 
@@ -23,6 +24,7 @@ namespace Yunyun.Core.Services
                 Token = config["Token"];
                 Prefix = config["Prefix"];
                 Version = config["Version"];
+                GeniusToken = config["GeniusToken"];
             }
 
             catch (Exception)
