@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Web;
 using Discord;
 using Discord.WebSocket;
 using Newtonsoft.Json.Linq;
@@ -141,11 +142,13 @@ namespace Yunyun.Core.Services
                 var html = (await _client.GetStringAsync(lyricsUrl))[120000..];
                 int index = html.IndexOf("<div class=\"lyrics\"");
                 int length;
+                string lyrics;
                 
                 if (index > -1)
                 {
                     index += html[index..].IndexOf("<p>") + 3;
                     length = html[index..].IndexOf("</p>");
+                    lyrics = html[index..(index + length)].Replace("<br>", Environment.NewLine);
                 }
                 
                 else
@@ -153,9 +156,8 @@ namespace Yunyun.Core.Services
                     index = html.IndexOf("<div data-lyrics-container=\"true\"");
                     index += html[index..].IndexOf(">") + 1;
                     length = html[index..].IndexOf("</div>");
+                    lyrics = HttpUtility.HtmlDecode(html[index..(index + length)].Replace("<br/>", Environment.NewLine));
                 }
-                
-                var lyrics = html[index..(index + length)].Replace("<br>", Environment.NewLine);
                 index = 0;
                 for (int i = 0; i < lyrics.Length; i++)
                 {
