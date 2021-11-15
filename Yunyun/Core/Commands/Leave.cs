@@ -16,7 +16,7 @@ namespace Yunyun.Core.Commands
         {
             var player = LavalinkService.GetPlayer(Context.Guild);
 
-            if (player is null)
+            if (player == null)
             {
                 await ReplyAsync("I'm not connected to a voice channel!");
                 return;

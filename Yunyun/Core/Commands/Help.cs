@@ -12,7 +12,7 @@ namespace Yunyun.Core.Commands
         [Name("Help")]
         [Command("help")]
         [Summary("Shows this message.")]
-        public async Task HelpCommand([Remainder] [Summary("That you want to see info.")] string command = null)
+        public async Task HelpCommand([Remainder][Summary("That you want to see info.")] string command = null)
         {
             if (command == null)
             {
@@ -20,7 +20,7 @@ namespace Yunyun.Core.Commands
                     .WithTitle($"{Context.Client.CurrentUser.Username}'s Commands")
                     .WithDescription(string.Join("\n", ProviderService.GetService<CommandService>().Commands.Select(c => $"`{ConfigurationService.Prefix}{string.Join("|", c.Aliases)}` --> {c.Summary}")))
                     .WithColor(255, 79, 0)
-                    .WithFooter(footer => 
+                    .WithFooter(footer =>
                     {
                         footer.Text = $"Requested by {Context.User}";
                         footer.IconUrl = Context.User.GetAvatarUrl();
@@ -28,7 +28,7 @@ namespace Yunyun.Core.Commands
                     .WithCurrentTimestamp().Build();
                 await ReplyAsync(embed: embed);
             }
-        
+
             else
             {
                 var cmd = ProviderService.GetService<CommandService>().Commands.Where(c => c.Aliases.Contains(command.ToLower())).First();

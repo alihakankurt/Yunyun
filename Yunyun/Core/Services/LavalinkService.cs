@@ -138,42 +138,49 @@ namespace Yunyun.Core.Services
                 var title = (string)hits["full_title"];
                 var lyricsUrl = $"https://genius.com{hits["path"]}";
                 var thumbnail = (string)hits["header_image_url"];
-                
-                var html = (await _client.GetStringAsync(lyricsUrl))[120000..];
-                int index = html.IndexOf("<div class=\"lyrics\"");
                 int length;
                 string lyrics;
-                
-                if (index > -1)
+                try
                 {
-                    index += html[index..].IndexOf("<p>") + 3;
-                    length = html[index..].IndexOf("</p>");
-                    lyrics = html[index..(index + length)].Replace("<br>", Environment.NewLine);
-                }
-                
-                else
-                {
-                    index = html.IndexOf("<div data-lyrics-container=\"true\"");
-                    index += html[index..].IndexOf(">") + 1;
-                    length = html[index..].IndexOf("</div>");
-                    lyrics = HttpUtility.HtmlDecode(html[index..(index + length)].Replace("<br/>", Environment.NewLine));
-                }
-                index = 0;
-                for (int i = 0; i < lyrics.Length; i++)
-                {
-                    if (lyrics[i] == '<')
+                    var html = (await _client.GetStringAsync(lyricsUrl))[120000..];
+                    int index = html.IndexOf("<div class=\"lyrics\"");
+
+                    if (index > -1)
                     {
-                        index = i;
+                        index += html[index..].IndexOf("<p>") + 3;
+                        length = html[index..].IndexOf("</p>");
+                        lyrics = html[index..(index + length)].Replace("<br>", Environment.NewLine);
                     }
 
-                    else if (lyrics[i] == '>')
+                    else
                     {
-                        lyrics = lyrics.Remove(index, i - index + 1);
-                        i = index;
+                        index = html.IndexOf("<div data-lyrics-container=\"true\"");
+                        index += html[index..].IndexOf(">") + 1;
+                        length = html[index..].IndexOf("</div>");
+                        lyrics = HttpUtility.HtmlDecode(html[index..(index + length)].Replace("<br/>", Environment.NewLine));
                     }
+                    index = 0;
+                    for (int i = 0; i < lyrics.Length; i++)
+                    {
+                        if (lyrics[i] == '<')
+                        {
+                            index = i;
+                        }
+
+                        else if (lyrics[i] == '>')
+                        {
+                            lyrics = lyrics.Remove(index, i - index + 1);
+                            i = index;
+                        }
+                    }
+                    lyrics = string.Join("\n", lyrics.Split("\n", StringSplitOptions.RemoveEmptyEntries));
+                    return new GeniusResponse(title, lyrics, lyricsUrl, thumbnail);
                 }
-                lyrics = string.Join("\n", lyrics.Split("\n", StringSplitOptions.RemoveEmptyEntries));
-                return new GeniusResponse(title, lyrics, lyricsUrl, thumbnail);
+
+                catch
+                {
+                    return new GeniusResponse(title, "Click on the song name.", lyricsUrl, thumbnail);
+                }
             }
 
             catch

@@ -10,10 +10,10 @@ namespace Yunyun.Core.Services
 
         public static void SetProvider(IServiceCollection collection)
             => Provider = collection.BuildServiceProvider();
-        
+
         public static T GetService<T>()
             => Provider.GetRequiredService<T>();
-        
+
         public static LavaNode GetLavaNode()
             => Provider.GetRequiredService<LavaNode>();
     }

@@ -15,32 +15,25 @@ namespace Yunyun.Core.Commands
         [Command("playskip", RunMode = RunMode.Async)]
         [Alias("ps")]
         [Summary("Skips the current track, adds the track(s) and plays next.")]
-        public async Task PlaySkipCommand([Remainder] [Summary("The search query about track or URL.")] string query)
+        public async Task PlaySkipCommand([Remainder][Summary("The search query about track or URL.")] string query)
         {
             var player = LavalinkService.GetPlayer(Context.Guild);
 
-            if (player is null)
+            if (player == null)
             {
                 await ReplyAsync("I'm not connected to a voice channel!");
                 return;
             }
 
-            var channel = (Context.User as SocketGuildUser).VoiceChannel;
-
-            if (channel != player.VoiceChannel)
+            if ((Context.User as SocketGuildUser).VoiceChannel != player.VoiceChannel)
             {
-                if (channel == null || (await player.VoiceChannel.GetUsersAsync().FlattenAsync()).Where(x => !x.IsBot).Count() > 0)
-                {
-                    await ReplyAsync($"You need to be in `{player.VoiceChannel.Name}` for do that!");
-                    return;
-                }
-
-                await LavalinkService.MoveAsync(channel);
+                await ReplyAsync($"You need to be in `{player.VoiceChannel.Name}` for do that!");
+                return;
             }
 
             var search = await LavalinkService.SearchAsync(query);
 
-            if (player.Track is null && player.PlayerState != PlayerState.Playing || player.PlayerState is PlayerState.Paused)
+            if (player.Track == null && player.PlayerState != PlayerState.Playing || player.PlayerState == PlayerState.Paused)
             {
                 await ReplyAsync("Playback is not playing!");
                 return;
@@ -58,7 +51,7 @@ namespace Yunyun.Core.Commands
                 await player.PlayAsync(track);
                 foreach (var t in search.Tracks.TakeLast(search.Tracks.Count - 1))
                     player.Queue.Enqueue(t);
-                
+
                 await ReplyAsync($"{search.Tracks.Count()} tracks added to queue.");
             }
 
@@ -66,7 +59,7 @@ namespace Yunyun.Core.Commands
             {
                 var track = search.Tracks.First();
                 player.Queue.Enqueue(track);
-                
+
                 await ReplyAsync($"**{track.Title} - {track.Author}** added to queue.");
             }
 

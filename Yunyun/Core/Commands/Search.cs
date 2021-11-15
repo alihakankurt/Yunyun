@@ -13,7 +13,7 @@ namespace Yunyun.Core.Commands
         [Name("Search")]
         [Command("search", RunMode = RunMode.Async)]
         [Summary("Searchs in YouTube with given query.")]
-        public async Task SearchCommand([Remainder] [Summary("The search query about track or URL.")] string query)
+        public async Task SearchCommand([Remainder][Summary("The search query about track or URL.")] string query)
         {
             var search = await LavalinkService.SearchAsync(query);
             var tracks = search.Tracks.Take(10);
@@ -36,7 +36,7 @@ namespace Yunyun.Core.Commands
                     .WithDescription(string.Join("\n", tracks.Select((t, i) => $"`{i + 1})` [{t.Title} ({t.Duration})]({t.Url})")))
                     .WithColor(255, 79, 0)
                     .WithCurrentTimestamp().Build();
-                
+
                 await ReplyAsync(embed: embed);
             }
         }

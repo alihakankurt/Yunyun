@@ -16,19 +16,19 @@ namespace Yunyun.Core.Commands
         {
             var player = LavalinkService.GetPlayer(Context.Guild);
             var target = channel ?? (Context.User as IVoiceState).VoiceChannel;
-            if (target is null)
+            if (target == null)
             {
                 await ReplyAsync("No voice channel is provided!");
                 return;
             }
             
-            if (player != null && channel is null)
+            if (player != null && channel == null)
             {
                 await ReplyAsync("I'm already connected to voice channel!");
                 return;
             }
 
-            else if (player != null && channel is null)
+            else if (player != null && channel == null)
             {
                 await LavalinkService.MoveAsync(channel);
             }

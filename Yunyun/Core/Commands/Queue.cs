@@ -13,11 +13,11 @@ namespace Yunyun.Core.Commands
         [Command("queue", RunMode = RunMode.Async)]
         [Alias("q")]
         [Summary("Shows the queue.")]
-        public async Task QueueCommand([Remainder] [Summary("The page that you want to see.")] ushort page = 1)
+        public async Task QueueCommand([Remainder][Summary("The page that you want to see.")] ushort page = 1)
         {
             var player = LavalinkService.GetPlayer(Context.Guild);
-            
-            if (player is null)
+
+            if (player == null)
             {
                 await ReplyAsync("I'm not connected to a voice channel!");
                 return;
@@ -26,13 +26,13 @@ namespace Yunyun.Core.Commands
             var embed = new EmbedBuilder()
                 .WithDescription(string.Join("\n", player.Queue.Where((t, i) => i >= page * 10 - 10 && i < page * 10).Select((t, i) => $"`{i + 1})` {t.Title} - {t.Author}")))
                 .WithColor(255, 79, 0)
-                .WithFooter(footer => 
+                .WithFooter(footer =>
                 {
                     footer.Text = $"Requested by {Context.User}";
                     footer.IconUrl = Context.User.GetAvatarUrl();
                 })
                 .WithCurrentTimestamp().Build();
-            
+
             await ReplyAsync(embed: embed);
         }
     }

@@ -39,7 +39,7 @@ namespace Yunyun.Core.Commands
                 .AddField("CPU Time", $"{process.TotalProcessorTime.TotalMilliseconds} ms", true)
                 .WithColor(255, 79, 0)
                 .WithCurrentTimestamp().Build();
-            
+
             await ReplyAsync(embed: embed);
         }
     }

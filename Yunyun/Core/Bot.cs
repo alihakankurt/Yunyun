@@ -93,7 +93,7 @@ namespace Yunyun.Core
             }
 
             await _client.SetStatusAsync(UserStatus.Idle);
-            await _client.SetGameAsync($"@{_client.CurrentUser.Username} play", null, ActivityType.Listening);
+            await _client.SetGameAsync($"@{_client.CurrentUser.Username} play • Version {ConfigurationService.Version}", null, ActivityType.Listening);
         }
 
         private async Task OnVoiceStateUpdate(SocketUser user, SocketVoiceState before, SocketVoiceState after)
@@ -131,6 +131,7 @@ namespace Yunyun.Core
 
         private static string GetErrorMessage(IResult result)
         {
+            Console.WriteLine(result.ErrorReason);
             return result.Error switch
             {
                 CommandError.ParseFailed => "Malformed argument.",
@@ -140,7 +141,7 @@ namespace Yunyun.Core
                 CommandError.UnmetPrecondition => "A precondition for the command was not met.",
                 CommandError.Exception => "An exception has occured during the command execution.",
                 CommandError.Unsuccessful => "The command excecution was unsuccessfull.",
-                _ => $"ERROR: {result}"
+                _ => $"ERROR: {result.ErrorReason}"
             };
         }
     }

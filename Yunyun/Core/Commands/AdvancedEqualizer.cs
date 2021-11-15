@@ -15,7 +15,7 @@ namespace Yunyun.Core.Commands
         {
             var player = LavalinkService.GetPlayer(Context.Guild);
 
-            if (player is null)
+            if (player == null)
             {
                 await ReplyAsync("I'm not connected to a voice channel!");
                 return;
@@ -29,7 +29,7 @@ namespace Yunyun.Core.Commands
 
             var equalizer = LavalinkService.GetEqualizer(band, gain);
 
-            if (equalizer is null)
+            if (equalizer == null)
             {
                 await ReplyAsync("The equalizer band or gain is out of bounds.");
                 return;

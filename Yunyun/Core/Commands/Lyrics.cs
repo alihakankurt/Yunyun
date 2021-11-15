@@ -37,7 +37,7 @@ namespace Yunyun.Core.Commands
                     footer.IconUrl = Context.User.GetAvatarUrl();
                 })
                 .WithTitle(response.Title)
-                .WithDescription((response.Lyrics == string.Empty) ? "Click on the song name." : ((response.Lyrics.Length > 2048) ? $"{response.Lyrics[..2045]}..." : response.Lyrics))
+                .WithDescription((response.Lyrics.Length > 2048) ? $"{response.Lyrics[..2045]}..." : response.Lyrics)
                 .WithUrl(response.Url)
                 .WithThumbnailUrl(response.Thumbnail)
                 .WithColor(255, 79, 0)
