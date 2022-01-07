@@ -14,13 +14,13 @@ namespace Yunyun.Core
 {
     public class Bot
     {
-        private readonly DiscordSocketClient _client;
-        private readonly CommandService _commands;
-        private readonly LavaNode _lavaNode;
+        private readonly DiscordSocketClient Client;
+        private readonly CommandService Commands;
+        private readonly LavaNode LavaNode;
 
         public Bot()
         {
-            _client = new DiscordSocketClient(new DiscordSocketConfig
+            Client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Verbose,
                 GatewayIntents =
@@ -28,11 +28,11 @@ namespace Yunyun.Core
                     GatewayIntents.GuildMembers |
                     GatewayIntents.GuildMessages |
                     GatewayIntents.GuildVoiceStates,
-                MessageCacheSize = 1000,
-                AlwaysDownloadUsers = true
+                MessageCacheSize = 200,
+                AlwaysDownloadUsers = false
             });
 
-            _commands = new CommandService(new CommandServiceConfig
+            Commands = new CommandService(new CommandServiceConfig
             {
                 LogLevel = LogSeverity.Verbose,
                 DefaultRunMode = RunMode.Async,
@@ -41,8 +41,8 @@ namespace Yunyun.Core
             });
 
             var collection = new ServiceCollection()
-                .AddSingleton(_client)
-                .AddSingleton(_commands)
+                .AddSingleton(Client)
+                .AddSingleton(Commands)
                 .AddSingleton(new HttpClient())
                 .AddLavaNode(x => 
                 {
@@ -52,12 +52,11 @@ namespace Yunyun.Core
             
             ProviderService.SetProvider(collection);
 
-            _lavaNode = ProviderService.GetLavaNode();
-            _commands.Log += DiscordLog;
-            _client.Log += DiscordLog;
-            _client.Ready += OnReady;
-            _client.MessageReceived += OnMessage;
-            _client.UserVoiceStateUpdated += OnVoiceStateUpdate;
+            LavaNode = ProviderService.GetLavaNode();
+            Commands.Log += DiscordLog;
+            Client.Log += DiscordLog;
+            Client.Ready += OnReady;
+            Client.MessageReceived += OnMessage;
         }
 
         public async Task RunAsync()
@@ -68,16 +67,16 @@ namespace Yunyun.Core
             if (string.IsNullOrWhiteSpace(ConfigurationService.Token))
                 return;
 
-            await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), ProviderService.Provider);
-            await _client.LoginAsync(TokenType.Bot, ConfigurationService.Token);
-            await _client.StartAsync();
-            
+            await Commands.AddModulesAsync(Assembly.GetEntryAssembly(), ProviderService.Provider);
+            await Client.LoginAsync(TokenType.Bot, ConfigurationService.Token);
+            await Client.StartAsync();
+
             await Task.Delay(-1);
         }
 
         private static Task DiscordLog(LogMessage arg)
         {
-            Console.WriteLine($"[{DateTime.Now.ToLongTimeString()}] ({arg.Severity.ToString().ToUpper()}) {arg.Source} => {(arg.Exception is null ? arg.Message : arg.Exception.InnerException.Message)}");
+            Console.WriteLine($"[{DateTime.Now.ToLongTimeString()}] ({arg.Severity.ToString().ToUpper()}) {arg.Source} => {((arg.Exception == null) ? arg.Message : arg.Exception.Message)}");
             return Task.CompletedTask;
         }
 
@@ -85,64 +84,51 @@ namespace Yunyun.Core
         {
             try
             {
-                await _lavaNode.ConnectAsync();
+                await LavaNode.ConnectAsync();
             }
-            catch (Exception exc)
+            catch
             {
-                throw exc.InnerException;
+                
             }
 
-            await _client.SetStatusAsync(UserStatus.Idle);
-            await _client.SetGameAsync($"@{_client.CurrentUser.Username} play • Version {ConfigurationService.Version}", null, ActivityType.Listening);
-        }
-
-        private async Task OnVoiceStateUpdate(SocketUser user, SocketVoiceState before, SocketVoiceState after)
-        {
-            if (!user.IsBot)
-                if (before.VoiceChannel != null && after.VoiceChannel == null)
-                    if (before.VoiceChannel.Users.Where(u => !u.IsBot).Count() < 1)
-                        await LavalinkService.LeaveAsync(before.VoiceChannel);
+            await Client.SetStatusAsync(UserStatus.Idle);
+            await Client.SetGameAsync($"@{Client.CurrentUser.Username} play • Version {ConfigurationService.Version}", null, ActivityType.Listening);
         }
 
         private async Task OnMessage(SocketMessage arg)
         {
             var message = arg as SocketUserMessage;
-            var context = new SocketCommandContext(_client, message);
+            var context = new SocketCommandContext(Client, message);
             
             if (message.Author.IsBot || message.Channel is IDMChannel)
                 return;
             
             var argPos = 0;
 
-            if (!(message.HasStringPrefix(ConfigurationService.Prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)))
+            if (!(message.HasStringPrefix(ConfigurationService.Prefix, ref argPos) || message.HasMentionPrefix(Client.CurrentUser, ref argPos)))
                 return;
 
-            var result = await _commands.ExecuteAsync(context, argPos, ProviderService.Provider);
+            var result = await Commands.ExecuteAsync(context, argPos, ProviderService.Provider);
 
             if (!result.IsSuccess)
             {
                 if (result.Error is CommandError.UnknownCommand)
                     return;
 
-                else
-                    await context.Channel.SendMessageAsync($"❗ {GetErrorMessage(result)}");
-            }
-        }
 
-        private static string GetErrorMessage(IResult result)
-        {
-            Console.WriteLine(result.ErrorReason);
-            return result.Error switch
-            {
-                CommandError.ParseFailed => "Malformed argument.",
-                CommandError.BadArgCount => "Command did not have the right amount of parameters.",
-                CommandError.ObjectNotFound => "Discord object was not found",
-                CommandError.MultipleMatches => "Multiple commands were found. Please be more specific",
-                CommandError.UnmetPrecondition => "A precondition for the command was not met.",
-                CommandError.Exception => "An exception has occured during the command execution.",
-                CommandError.Unsuccessful => "The command excecution was unsuccessfull.",
-                _ => $"ERROR: {result.ErrorReason}"
-            };
+                var errorMessage = result.Error switch
+                {
+                    CommandError.ParseFailed => "Malformed argument.",
+                    CommandError.BadArgCount => "Command did not have the right amount of parameters.",
+                    CommandError.ObjectNotFound => "Discord object was not found",
+                    CommandError.MultipleMatches => "Multiple commands were found. Please be more specific",
+                    CommandError.UnmetPrecondition => "A precondition for the command was not met.",
+                    CommandError.Exception => "An exception has occured during the command execution.",
+                    CommandError.Unsuccessful => "The command excecution was unsuccessfull.",
+                    _ => $"ERROR: {result.ErrorReason}"
+                };
+                await context.Channel.SendMessageAsync($"❗ {errorMessage}");
+            }
         }
     }
 }

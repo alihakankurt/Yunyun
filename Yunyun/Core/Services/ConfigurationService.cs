@@ -8,9 +8,6 @@ namespace Yunyun.Core.Services
         public static string Token { get; set; }
         public static string Prefix { get; set; }
         public static string Version { get; set; }
-        public static string GeniusToken { get; set; }
-
-        private static readonly string ConfigPath = "configuration.yaml";
 
         public static void RunService()
         {
@@ -18,16 +15,15 @@ namespace Yunyun.Core.Services
             {
                 var config = new ConfigurationBuilder()
                     .SetBasePath(AppContext.BaseDirectory)
-                    .AddYamlFile(ConfigPath)
+                    .AddJsonFile("appsettings.json")
                     .Build();
 
                 Token = config["Token"];
                 Prefix = config["Prefix"];
                 Version = config["Version"];
-                GeniusToken = config["GeniusToken"];
             }
 
-            catch (Exception)
+            catch
             {
                 Console.WriteLine("Configuration could not be loaded! Exiting...");
                 Environment.Exit(0);
